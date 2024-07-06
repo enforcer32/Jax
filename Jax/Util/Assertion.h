@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Jax/Core/Platform.h"
-#include "Jax/Core/Logger.h"
+#include "Jax/Util/Platform.h"
+#include "Jax/Util/Logger.h"
 
 #if defined JAX_DEBUG
 	#ifdef JAX_PLATFORM_WINDOWS
