@@ -2,6 +2,7 @@
 
 #include <string>
 #include <sstream>
+#include <memory>
 
 namespace JAX
 {
@@ -12,7 +13,7 @@ namespace JAX
 		uint32_t Flags;
 	};
 
-	struct CompilerProperties
+	struct CompilerInstance
 	{
 		std::string InFilePath;
 		std::istringstream InFileStream;
@@ -34,6 +35,6 @@ namespace JAX
 
 	private:
 		JaxProperties m_JaxProperties;
-		CompilerProperties m_CompilerProperties;
+		std::shared_ptr<CompilerInstance> m_CompilerInstance;
 	};
 }
