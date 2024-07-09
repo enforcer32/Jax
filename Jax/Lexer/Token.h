@@ -44,7 +44,7 @@ namespace JAX
 		std::string BracketValue;
 
 		Token(TokenType type = TokenType::Invalid)
-			: Type(type), Any(nullptr)
+			: Type(type), Any(nullptr), Flags(0), Whitespace(false)
 		{
 		}
 

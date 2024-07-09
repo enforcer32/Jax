@@ -20,6 +20,10 @@ namespace JAX
 		LexerResult Lex();
 
 	private:
+		Token NextToken();
+		Token ProcessWhitespace();
+		Token MakeNumberToken();
+
 		char NextChar();
 		char PeekChar();
 		void PutBack(char c);
