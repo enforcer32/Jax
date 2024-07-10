@@ -23,6 +23,7 @@ namespace JAX
 		Token NextToken();
 		Token ProcessWhitespace();
 		Token MakeNumberToken();
+		Token MakeStringToken(char sdelim, char edelim);
 
 		char NextChar();
 		char PeekChar();

@@ -47,6 +47,11 @@ namespace JAX
 			token = MakeNumberToken();
 			break;
 
+			// String
+		case '"':
+			token = MakeStringToken('"', '"');
+			break;
+
 		case EOF:
 			break;
 		default:
@@ -77,6 +82,29 @@ namespace JAX
 		token.Type = TokenType::Number;
 		token.Position = m_Position;
 		token.LLNum = std::atoi(numbers.c_str());
+		return token;
+	}
+
+	Token Lexer::MakeStringToken(char sdelim, char edelim)
+	{
+		if (NextChar() != sdelim)
+			JAX_LOG_CRITICAL("Lexer: Bad String Delimiter!");
+
+		std::string str;
+		char c = NextChar();
+		for (; c != edelim && c != EOF; c = NextChar())
+		{
+			// Escape Characters
+			if (c == '\\')
+				continue;
+			str.push_back(c);
+		}
+
+		Token token;
+		token.Type = TokenType::String;
+		token.Position = m_Position;
+		token.SVal = new char[str.size() + 1];
+		memcpy((char*)token.SVal, str.c_str(), str.size() + 1);
 		return token;
 	}
 
