@@ -20,6 +20,28 @@ namespace JAX
 		return LexerResult::Successful;
 	}
 
+	char Lexer::NextChar()
+	{
+		char c = m_CompilerInstance->InFileStream.get();
+		m_Position.Col++;
+		if (c == '\n')
+		{
+			m_Position.Line++;
+			m_Position.Col = 1;
+		}
+		return c;
+	}
+
+	char Lexer::PeekChar() const
+	{
+		return m_CompilerInstance->InFileStream.peek();
+	}
+
+	void Lexer::PutBack(char c)
+	{
+		m_CompilerInstance->InFileStream.putback(c);
+	}
+
 	Token Lexer::NextToken()
 	{
 		Token token;
@@ -52,10 +74,43 @@ namespace JAX
 			token = MakeStringToken('"', '"');
 			break;
 
+			// Operators
+		case '+':
+		case '-':
+		case '*':
+		case '%':
+		case '=':
+		case '<':
+		case '>':
+		case '!':
+		case '&':
+		case '|':
+		case '^':
+		case '~':
+		case '[':
+		case '(':
+		case '?':
+		case ',':
+		case '.':
+			token = MakeOperatorToken(); // Doesnt Handle #include <X>
+			break;
+
+			// Symbols
+		case '{':
+		case '}':
+		case ':':
+		case ';':
+		case '#':
+		case '\\':
+		case ')':
+		case ']':
+			token = MakeSymbolToken();
+			break;
+
 		case EOF:
 			break;
 		default:
-			JAX_LOG_CRITICAL("Unexpected Token : {}\n on line {}, col {} in file {}", c, m_Position.Line, m_Position.Col, m_CompilerInstance->InFilePath);
+			JAX_LOG_CRITICAL("Lexer Unexpected Token : {}\n on line {}, col {} in file {}", c, m_Position.Line, m_Position.Col, m_CompilerInstance->InFilePath);
 		}
 
 		return token;
@@ -108,25 +163,94 @@ namespace JAX
 		return token;
 	}
 
-	char Lexer::NextChar()
+	Token Lexer::MakeOperatorToken()
 	{
-		char c = m_CompilerInstance->InFileStream.get();
-		m_Position.Col++;
-		if (c == '\n')
+		char op = PeekChar();
+		if (op == '<')
+			if (!m_Tokens.empty())
+				if (m_Tokens.back().Type == TokenType::Keyword && std::strcmp(m_Tokens.back().SVal, "include"))
+					return MakeIncludePreprocessorToken();
+		return MakeRegularOperatorToken();
+	}
+
+	Token Lexer::MakeRegularOperatorToken()
+	{
+		bool singleOperator = true;
+
+		char op = NextChar();
+		std::string opStr{ op };
+
+		if (!IsSinglyOperator(op))
 		{
-			m_Position.Line++;
-			m_Position.Col = 1;
+			// Stackable Operator: i.e ++
+			op = PeekChar();
+			if (IsOperator(op))
+			{
+				opStr += op;
+				singleOperator = false;
+				NextChar();
+			}
 		}
-		return c;
+
+		// PutBack All Except First One
+		if (!singleOperator && !IsValidOperator(opStr))
+			for (size_t i = opStr.size() - 1; i >= 1; i--)
+				PutBack(opStr[i]);
+
+		if (singleOperator && !IsValidOperator(opStr))
+			JAX_LOG_CRITICAL("Lexer Invalid Operator : {}\n on line {}, col {} in file {}", opStr, m_Position.Line, m_Position.Col, m_CompilerInstance->InFilePath);
+
+		Token token;
+		token.Type = TokenType::Operator;
+		token.Position = m_Position;
+		token.SVal = new char[opStr.size() + 1];
+		memcpy((char*)token.SVal, opStr.c_str(), opStr.size() + 1);
+		return token;
 	}
 
-	char Lexer::PeekChar()
+	Token Lexer::MakeIncludePreprocessorToken()
 	{
-		return m_CompilerInstance->InFileStream.peek();
+		return MakeStringToken('<', '>');
 	}
 
-	void Lexer::PutBack(char c)
+	Token Lexer::MakeSymbolToken()
 	{
-		m_CompilerInstance->InFileStream.putback(c);
+		char c = NextChar();
+		Token token;
+		token.Type = TokenType::Symbol;
+		token.Position = m_Position;
+		token.CVal = c;
+		return token;
+	}
+
+	bool Lexer::IsOperator(char op) const
+	{
+		return (op == '+' || op == '-' || op == '*' || 
+			op == '%' || op == '=' || op == '<' || 
+			op == '>' || op == '!' || op == '&' || 
+			op == '|' || op == '^' || op == '~' || 
+			op == '[' || op == '(' || op == '?' || 
+			op == ',' || op == '.');
+	}
+
+	bool Lexer::IsSinglyOperator(char op) const
+	{
+		return (op == ',' || op == '.' || op == '(' || op == '[' || op == '?' || op == '*');
+	}
+
+	bool Lexer::IsValidOperator(const std::string& op) const
+	{
+		return (op == "+" || op == "-" || op == "*" ||
+			op == "/" || op == "%" || op == "!" ||
+			op == "^" || op == "~" || op == "?" ||
+			op == "(" || op == "[" || op == "," ||
+			op == "." || op == "<" || op == ">" ||
+			op == "|" || op == "&" || op == "+=" ||
+			op == "-=" || op == "*=" || op == "/=" ||
+			op == ">>" || op == "<<" ||	op == ">=" ||
+			op == "<=" || op == "||" ||	op == "&&" ||
+			op == "++" || op == "--" ||	op == "=" ||
+			op == "!=" || op == "==" ||	op == "->" ||
+			op == ">>=" || op == "<<=" || op == "...");
 	}
 }

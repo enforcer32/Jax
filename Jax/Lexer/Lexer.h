@@ -20,14 +20,22 @@ namespace JAX
 		LexerResult Lex();
 
 	private:
+		char NextChar();
+		char PeekChar() const;
+		void PutBack(char c);
+
 		Token NextToken();
 		Token ProcessWhitespace();
 		Token MakeNumberToken();
 		Token MakeStringToken(char sdelim, char edelim);
+		Token MakeOperatorToken();
+		Token MakeRegularOperatorToken();
+		Token MakeIncludePreprocessorToken();
+		Token MakeSymbolToken();
 
-		char NextChar();
-		char PeekChar();
-		void PutBack(char c);
+		bool IsOperator(char op) const;
+		bool IsSinglyOperator(char op) const;
+		bool IsValidOperator(const std::string& op) const;
 
 	private:
 		std::shared_ptr<CompilerInstance> m_CompilerInstance;
