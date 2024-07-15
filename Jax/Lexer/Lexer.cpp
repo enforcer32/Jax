@@ -1,6 +1,8 @@
 #include "Jax/Lexer/Lexer.h"
 #include "Jax/Util/Logger.h"
 
+#include <vector>
+
 namespace JAX
 {
 	Lexer::Lexer(const std::shared_ptr<CompilerInstance>& instance)
@@ -110,7 +112,10 @@ namespace JAX
 		case EOF:
 			break;
 		default:
-			JAX_LOG_CRITICAL("Lexer Unexpected Token : {}\n on line {}, col {} in file {}", c, m_Position.Line, m_Position.Col, m_CompilerInstance->InFilePath);
+			// Identifiers & Keywords
+			token = MakeWordToken();
+			if(!token)
+				JAX_LOG_CRITICAL("Lexer Unexpected Token : {}\n on line {}, col {} in file {}", c, m_Position.Line, m_Position.Col, m_CompilerInstance->InFilePath);
 		}
 
 		return token;
@@ -223,6 +228,32 @@ namespace JAX
 		return token;
 	}
 
+	Token Lexer::MakeWordToken()
+	{
+		char c = PeekChar();
+		if (std::isalpha(c) || c == '_')
+			return MakeIdentifierToken();
+		return {};
+	}
+
+	Token Lexer::MakeIdentifierToken()
+	{
+		std::string identifier;
+		
+		for (char c = PeekChar(); ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'); c = PeekChar())
+		{
+			identifier += c;
+			c = NextChar();
+		}
+
+		Token token;
+		token.Type = (IsKeyword(identifier) ? TokenType::Keyword : TokenType::Identifier);
+		token.Position = m_Position;
+		token.SVal = new char[identifier.size() + 1];
+		memcpy((char*)token.SVal, identifier.c_str(), identifier.size() + 1);
+		return token;
+	}
+
 	bool Lexer::IsOperator(char op) const
 	{
 		return (op == '+' || op == '-' || op == '*' || 
@@ -252,5 +283,21 @@ namespace JAX
 			op == "++" || op == "--" ||	op == "=" ||
 			op == "!=" || op == "==" ||	op == "->" ||
 			op == ">>=" || op == "<<=" || op == "...");
+	}
+
+	bool Lexer::IsKeyword(const std::string& str) const
+	{
+		static const std::vector<std::string> keywords = {
+			"auto", "break", "case", "char",
+			"const", "continue", "default", "do",
+			"double", "else", "enum", "extern",
+			"float", "for", "goto", "if",
+			"int", "long", "register", "return",
+			"short", "signed", "sizeof", "static",
+			"struct", "switch", "typedef", "union",
+			"unsigned", "void", "volatile", "while",
+			"include", "restrict", "__ignore_typecheck",
+		};
+		return (std::find(keywords.begin(), keywords.end(), str) != keywords.end());
 	}
 }

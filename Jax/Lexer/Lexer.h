@@ -32,10 +32,13 @@ namespace JAX
 		Token MakeRegularOperatorToken();
 		Token MakeIncludePreprocessorToken();
 		Token MakeSymbolToken();
+		Token MakeWordToken();
+		Token MakeIdentifierToken();
 
 		bool IsOperator(char op) const;
 		bool IsSinglyOperator(char op) const;
 		bool IsValidOperator(const std::string& op) const;
+		bool IsKeyword(const std::string& str) const;
 
 	private:
 		std::shared_ptr<CompilerInstance> m_CompilerInstance;
