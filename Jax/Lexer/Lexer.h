@@ -26,6 +26,10 @@ namespace JAX
 
 		Token NextToken();
 		Token ProcessWhitespace();
+		Token ProcessNewLine();
+		Token ProcessSlashOperator();
+		Token ProcessSingleLineComment();
+		Token ProcessMultiLineComment();
 		Token MakeNumberToken();
 		Token MakeStringToken(char sdelim, char edelim);
 		Token MakeOperatorToken();

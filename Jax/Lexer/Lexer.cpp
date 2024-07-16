@@ -57,6 +57,10 @@ namespace JAX
 			token = ProcessWhitespace();
 			break;
 
+		case '\n':
+			token = ProcessNewLine();
+			break;
+
 			// Numbers
 		case '0':
 		case '1':
@@ -109,6 +113,11 @@ namespace JAX
 			token = MakeSymbolToken();
 			break;
 
+			// Slash Operator
+		case '/':
+			token = ProcessSlashOperator();
+			break;
+
 		case EOF:
 			break;
 		default:
@@ -127,6 +136,94 @@ namespace JAX
 			m_Tokens[m_Tokens.size() - 1].Whitespace = true;
 		NextChar();
 		return NextToken();
+	}
+
+	Token Lexer::ProcessNewLine()
+	{
+		NextChar();
+		Token token;
+		token.Type = TokenType::Newline;
+		token.Position = m_Position;
+		return token;
+	}
+
+	Token Lexer::ProcessSlashOperator()
+	{
+		char c = PeekChar();
+		if (c == '/')
+		{
+			NextChar();
+
+			if (PeekChar() == '/')
+			{
+				NextChar();
+				return ProcessSingleLineComment();
+			}
+			else if (PeekChar() == '*')
+			{
+				NextChar();
+				return ProcessMultiLineComment();
+			}
+
+			PutBack('/');
+			return MakeOperatorToken();
+		}
+
+		return {};
+	}
+
+	Token Lexer::ProcessSingleLineComment()
+	{
+		std::string comment;
+
+		for (char c = PeekChar(); (c != '\n' && c != EOF); c = PeekChar())
+		{
+			comment += c;
+			c = NextChar();
+		}
+
+		Token token;
+		token.Type = TokenType::Comment;
+		token.Position = m_Position;
+		token.SVal = new char[comment.size() + 1];
+		memcpy((char*)token.SVal, comment.c_str(), comment.size() + 1);
+		return token;
+	}
+
+	Token Lexer::ProcessMultiLineComment()
+	{
+		std::string comment;
+
+		while (true)
+		{
+			char c;
+			for (c = PeekChar(); (c != '*' && c != EOF); c = PeekChar())
+			{
+				comment += c;
+				c = NextChar();
+			}
+
+			if (c == EOF)
+			{
+				JAX_LOG_CRITICAL("Lexer Bad MultiLine Comment Format : {}\n on line {}, col {} in file {}", comment, m_Position.Line, m_Position.Col, m_CompilerInstance->InFilePath);
+			}
+			else if (c == '*')
+			{
+				NextChar();
+				if (PeekChar() == '/')
+				{
+					NextChar();
+					break;
+				}
+			}
+		}
+
+		Token token;
+		token.Type = TokenType::Comment;
+		token.Position = m_Position;
+		token.SVal = new char[comment.size() + 1];
+		memcpy((char*)token.SVal, comment.c_str(), comment.size() + 1);
+		return token;
 	}
 
 	Token Lexer::MakeNumberToken()
@@ -261,7 +358,7 @@ namespace JAX
 			op == '>' || op == '!' || op == '&' || 
 			op == '|' || op == '^' || op == '~' || 
 			op == '[' || op == '(' || op == '?' || 
-			op == ',' || op == '.');
+			op == ',' || op == '.' || op == '/');
 	}
 
 	bool Lexer::IsSinglyOperator(char op) const
