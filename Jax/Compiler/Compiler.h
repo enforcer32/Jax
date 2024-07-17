@@ -1,8 +1,11 @@
 #pragma once
 
+#include "Jax/Lexer/Token.h"
+
 #include <string>
 #include <sstream>
 #include <memory>
+#include <vector>
 
 namespace JAX
 {
@@ -20,6 +23,7 @@ namespace JAX
 		std::string OutFilePath;
 		std::ostringstream OutFileStream;
 		uint32_t Flags;
+		std::vector<Token> LexerTokens;
 	};
 
 	enum class CompilerResult

@@ -19,6 +19,7 @@ namespace JAX
 			token = NextToken();
 		}
 
+		m_CompilerInstance->LexerTokens = m_Tokens;
 		return LexerResult::Successful;
 	}
 

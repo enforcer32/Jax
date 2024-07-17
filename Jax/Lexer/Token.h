@@ -1,17 +1,12 @@
 #pragma once
 
+#include "Jax/Compiler/Common.h"
+
 #include <string>
 #include <iostream>
 
 namespace JAX
 {
-	struct Position
-	{
-		uint32_t Line;
-		uint32_t Col;
-		std::string FileName;
-	};
-
 	enum class TokenType
 	{
 		Invalid,

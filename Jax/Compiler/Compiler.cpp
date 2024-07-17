@@ -1,5 +1,6 @@
 #include "Jax/Compiler/Compiler.h"
 #include "Jax/Lexer/Lexer.h"
+#include "Jax/Parser/Parser.h"
 #include "Jax/Util/FileIO.h"
 #include "Jax/Util/Logger.h"
 
@@ -22,6 +23,14 @@ namespace JAX
 		if (lexer.Lex() != LexerResult::Successful)
 		{
 			JAX_LOG_ERROR("JAXLexer Failed!");
+			return CompilerResult::Failed;
+		}
+
+		// Parser
+		Parser parser(m_CompilerInstance);
+		if (parser.Parse() != ParserResult::Successful)
+		{
+			JAX_LOG_ERROR("JAXParser Failed!");
 			return CompilerResult::Failed;
 		}
 

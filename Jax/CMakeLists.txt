@@ -10,10 +10,15 @@ file(GLOB_RECURSE JaxSources
 
 	"${CMAKE_CURRENT_SOURCE_DIR}/Compiler/Compiler.h"
 	"${CMAKE_CURRENT_SOURCE_DIR}/Compiler/Compiler.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Compiler/Common.h"
 
 	"${CMAKE_CURRENT_SOURCE_DIR}/Lexer/Token.h"
 	"${CMAKE_CURRENT_SOURCE_DIR}/Lexer/Lexer.h"
 	"${CMAKE_CURRENT_SOURCE_DIR}/Lexer/Lexer.cpp"
+
+	"${CMAKE_CURRENT_SOURCE_DIR}/Parser/Node.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Parser/Parser.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Parser/Parser.cpp"
 )
 
 add_definitions(-DJAX_DEBUG)
