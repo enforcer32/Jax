@@ -55,6 +55,8 @@ namespace JAX
 		bool IsBinaryNumber(const std::string& str) const;
 		char CharToEscapedChar(char c) const;
 
+		std::vector<Token> GetTokens() const;
+
 	private:
 		std::shared_ptr<CompilerInstance> m_CompilerInstance;
 		Position m_Position;

@@ -250,6 +250,7 @@ namespace JAX
 
 	Token Lexer::MakeNumberToken()
 	{
+		// Get Numbers
 		std::string numbers;
 		for (char c = PeekChar(); c >= '0' && c <= '9'; c = PeekChar())
 		{
@@ -257,12 +258,24 @@ namespace JAX
 			NextChar();
 		}
 
+		// Check Number Type
+		NumberTokenType numberType = NumberTokenType::Primitive;
+		char numberLetter = std::tolower(PeekChar());
+		if (numberLetter == 'l')
+			numberType = NumberTokenType::Long;
+		else if (numberLetter == 'f')
+			numberType = NumberTokenType::Float;
+
+		if (numberType != NumberTokenType::Primitive)
+			NextChar();
+
 		Token token;
 		token.Type = TokenType::Number;
 		token.Position = m_Position;
 		token.LLNum = std::atoi(numbers.c_str());
 		if (IsInsideExpression())
 			token.BracketValue = m_CurrentExpressionData.c_str();
+		token.NumberType = numberType;
 		return token;
 	}
 
@@ -572,5 +585,10 @@ namespace JAX
 			break;
 		}
 		return ch;
+	}
+
+	std::vector<Token> Lexer::GetTokens() const
+	{
+		return m_Tokens;
 	}
 }
