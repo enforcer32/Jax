@@ -41,7 +41,7 @@ namespace JAX
 		};
 
 		bool Whitespace;
-		std::string BracketValue;
+		const char* BracketValue;
 
 		Token(TokenType type = TokenType::Invalid)
 			: Type(type), Any(nullptr), Flags(0), Whitespace(false)

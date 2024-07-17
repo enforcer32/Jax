@@ -43,6 +43,10 @@ namespace JAX
 		Token MakeHexNumberToken();
 		Token MakeBinaryNumberToken();
 
+		void CreateExpression();
+		void EndExpression();
+		bool IsInsideExpression() const;
+
 		bool IsOperator(char op) const;
 		bool IsSinglyOperator(char op) const;
 		bool IsValidOperator(const std::string& op) const;
@@ -55,7 +59,7 @@ namespace JAX
 		std::shared_ptr<CompilerInstance> m_CompilerInstance;
 		Position m_Position;
 		std::vector<Token> m_Tokens;
-		uint32_t m_CurrentExpressionLevel;
-		std::string m_CurrentParenthesisData;
+		int32_t m_CurrentExpressionLevel;
+		std::string m_CurrentExpressionData;
 	};
 }

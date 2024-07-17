@@ -6,7 +6,7 @@
 namespace JAX
 {
 	Lexer::Lexer(const std::shared_ptr<CompilerInstance>& instance)
-		: m_CompilerInstance(instance), m_Position({ 1, 1, instance->InFilePath }), m_CurrentExpressionLevel(0), m_CurrentParenthesisData({})
+		: m_CompilerInstance(instance), m_Position({ 1, 1, instance->InFilePath }), m_CurrentExpressionLevel(0), m_CurrentExpressionData({})
 	{
 	}
 
@@ -25,6 +25,10 @@ namespace JAX
 	char Lexer::NextChar()
 	{
 		char c = m_CompilerInstance->InFileStream.get();
+
+		if (IsInsideExpression())
+			m_CurrentExpressionData += c;
+
 		m_Position.Col++;
 		if (c == '\n')
 		{
@@ -156,6 +160,8 @@ namespace JAX
 		Token token;
 		token.Type = TokenType::Newline;
 		token.Position = m_Position;
+		if(IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -199,6 +205,8 @@ namespace JAX
 		token.Position = m_Position;
 		token.SVal = new char[comment.size() + 1];
 		memcpy((char*)token.SVal, comment.c_str(), comment.size() + 1);
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -235,6 +243,8 @@ namespace JAX
 		token.Position = m_Position;
 		token.SVal = new char[comment.size() + 1];
 		memcpy((char*)token.SVal, comment.c_str(), comment.size() + 1);
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -251,6 +261,8 @@ namespace JAX
 		token.Type = TokenType::Number;
 		token.Position = m_Position;
 		token.LLNum = std::atoi(numbers.c_str());
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -274,6 +286,8 @@ namespace JAX
 		token.Position = m_Position;
 		token.SVal = new char[str.size() + 1];
 		memcpy((char*)token.SVal, str.c_str(), str.size() + 1);
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -284,6 +298,10 @@ namespace JAX
 			if (!m_Tokens.empty())
 				if (m_Tokens.back().Type == TokenType::Keyword && std::strcmp(m_Tokens.back().SVal, "include"))
 					return MakeIncludePreprocessorToken();
+
+		if (op == '(')
+			CreateExpression();
+
 		return MakeRegularOperatorToken();
 	}
 
@@ -319,6 +337,8 @@ namespace JAX
 		token.Position = m_Position;
 		token.SVal = new char[opStr.size() + 1];
 		memcpy((char*)token.SVal, opStr.c_str(), opStr.size() + 1);
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -330,10 +350,15 @@ namespace JAX
 	Token Lexer::MakeSymbolToken()
 	{
 		char c = NextChar();
+		if (c == ')')
+			EndExpression();
+
 		Token token;
 		token.Type = TokenType::Symbol;
 		token.Position = m_Position;
 		token.CVal = c;
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -360,6 +385,8 @@ namespace JAX
 		token.Position = m_Position;
 		token.SVal = new char[identifier.size() + 1];
 		memcpy((char*)token.SVal, identifier.c_str(), identifier.size() + 1);
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -381,6 +408,8 @@ namespace JAX
 		token.Type = TokenType::Number;
 		token.Position = m_Position;
 		token.CVal = c;
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -414,6 +443,8 @@ namespace JAX
 		token.Type = TokenType::Number;
 		token.Position = m_Position;
 		token.LNum = std::strtol(hexStr.c_str(), 0, 16);
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
 	}
 
@@ -435,7 +466,30 @@ namespace JAX
 		token.Type = TokenType::Number;
 		token.Position = m_Position;
 		token.LNum = std::strtol(binaryStr.c_str(), 0, 2);
+		if (IsInsideExpression())
+			token.BracketValue = m_CurrentExpressionData.c_str();
 		return token;
+	}
+
+	void Lexer::CreateExpression()
+	{
+		m_CurrentExpressionLevel++;
+		if (m_CurrentExpressionLevel == 1)
+		{
+			m_CurrentExpressionData = "";
+		}
+	}
+
+	void Lexer::EndExpression()
+	{
+		m_CurrentExpressionLevel--;
+		if (m_CurrentExpressionLevel < 0)
+			JAX_LOG_CRITICAL("Lexer Bad Expression Format : {}\n on line {}, col {} in file {}", m_CurrentExpressionLevel, m_Position.Line, m_Position.Col, m_CompilerInstance->InFilePath);
+	}
+
+	bool Lexer::IsInsideExpression() const
+	{
+		return m_CurrentExpressionLevel > 0;
 	}
 
 	bool Lexer::IsOperator(char op) const
