@@ -6,6 +6,7 @@ namespace JAX
 {
 	enum class NodeType
 	{
+		Invalid,
 		Number,
 		String,
 		Variable,
@@ -58,5 +59,15 @@ namespace JAX
 			unsigned long long LLNum;
 			void* Any;
 		};
+
+		Node(NodeType type = NodeType::Invalid)
+			: Type(type), Any(nullptr), Flags(0)
+		{
+		}
+
+		operator bool()
+		{
+			return Type != NodeType::Invalid;
+		}
 	};
 }
